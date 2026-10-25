@@ -1,0 +1,40 @@
+
+# ======================================
+# MATLAB
+# ======================================
+
+# Automatische Backups
+*.asv
+*.m~
+
+# MATLAB Autosave-Dateien
+*.autosave
+
+# ======================================
+# SIMULINK
+# ======================================
+
+# Simulink Cache
+slprj/
+sccprj/
+*.slxc
+
+# Simulink Backup-Dateien
+*.slx.r*
+*.mdl.r*
+
+# Automatisch generierter Code
+codegen/
+
+# ======================================
+# WINDOWS
+# ======================================
+
+Thumbs.db
+Desktop.ini
+
+# ======================================
+# EDITOR
+# ======================================
+
+.vscode/
