@@ -1,70 +1,58 @@
-
-% Example script for dynamic parameter iderntification
-% Engine Systems Class, IDSC, ETH Zurich
-
 clear; close all; clc;
 
-% Set simulation options. The simset options are a command-based way to 
-% define the simulation options. An alternative is to set them in the 
-% simulink model itself. Using simset and applying the same options to all 
-% simulations through the options-input in the "sim"-command is a way to 
-% make sure all simulations use the same options.
-    options.sim_options = simset('SrcWorkspace','current');
+%% LOAD DATA
+% Load parameters and sim options 
+Parameters
+options.sim_options = simopt; % simopt from Parameters.m
     
-% Load measurement data for parameter identification and add it to
-% fmin_data sruct
-    load('dynamic_0002.mat');
-    load('dynamic_0003.mat');
-
+% Load measurement data for parameter identification & validation
+id  = load('dynamic_0002.mat');  % id         - as recommended in exercise 6 slides (new structure: e.g. id.meas.u_alpha.signals.values)
+val = load('dynamic_0003.mat');  % validation - as recommended in exercise 6 slides (new structure: e.g. val.meas.u_alpha.signals.values)
 
 % Find the number of open figures, so a new figure can be created and used
 % over and over again. This command is not necessarily needed but it is
 % nice to have.
-    fh=findall(0,'type','figure');
-    options.fig_num = length(fh)+1;
-    options.enablePlot = 1;
-    
+fh=findall(0,'type','figure');
+options.fig_num = length(fh)+1;
+options.enablePlot = 1;
 
-%Intake Manifold Volume
-    % Define starting values of the optimization variables.
-    par0 = [7e-3]; % Vm
-        
-    % Run fminsearch using the error function and find optimal parameter values      
-        % Define function with only one input (parameters to be optimized)
-            errorfnc_fminsearch = @(par0) modellguete(par0, IdData, options);
-        % Call fminsearch    
-            opt_options = optimset('Algorithm','sqp','display','iter','Maxit',30);
-            optpar = fminsearch(errorfnc_fminsearch, par0, opt_options);
-            % lb = [0, 0.5];
-            % ub = [1, 1];
-            % optpar = fmincon(errorfnc_fminsearch, par0, [], [], [], [], lb, ub, [], opt_options);
+fprintf('\n Data Loaded. \n')
+
+%% Param ID - Intake Manifold Volume
+% Define starting values of the optimization variables.
+par0 = [params.Vm_guess]; 
+
+% use id data
+data = id;
+
+% Run fminsearch using the error function and find optimal parameter values      
+% Define function with only one input (parameters to be optimized)
+errorfnc_fminsearch = @(par0) Modelerror_Intake_Manifold(par0, data, options, params);
+% Call fminsearch    
+opt_options = optimset('Algorithm','sqp','display','iter','Maxit',30);
+
+fprintf('\n Fminsearch started. \n')
+
+optpar = fminsearch(errorfnc_fminsearch, par0, opt_options);
+
+% Extract optimal parameter values                    
+params.Vm = optpar(1);
+fprintf('\n identified Vm = %d \n', params.Vm)
+
+%% Param Validation - Intake Manifold
+% use val data
+data = val;
+
+out = sim('ParId_V_m_model.slx', data.meas.u_alpha.time(end), options.sim_options);
+pvalsim = out.p_m.Data;   % extract pressure vector
+tvalsim = out.p_m.Time;   % extract time vector
     
-    % Extract optimal parameter values                    
-        Vm = optpar(1)
-        lambda  = optpar(2)
-    
-    % Load validation data
-        load('DataValidation.mat');
-    
-    % Run a simulation with the identified optimal variable values
-        data.mdot_in = ValData.mdot_in;
-        data.p = ValData.p;
-        simval = sim('Intake_Manifold', ValData.mdot_in.time, options.sim_options);
-        tValSim = simval.tout;
-        pvalsim = simval.yout{1}.Values.Data;
-        
-    % Graphically represent the quality of the optimization routine
-        figure;
-    
-        subplot(2,1,1);
-        plot(tValSim, ValData.mdot_in.signals.values);
-            xlabel('Time [s]');
-            ylabel('Inputs');
-            legend('mdot_in');
-    
-        subplot(2,1,2);
-        plot(data.p.time, data.p.signals.values, tValSim, pvalsim);
-            xlabel('Time [s]');
-            ylabel('Outputs');
-            legend('Measured p','Modelled p')
+% Graphically represent the quality of the optimization routine
+figure;
+
+plot(val.meas.p_m.time, val.meas.p_m.signals.values, tvalsim, pvalsim);
+xlabel('Time [s]');
+ylabel('Outputs');
+title('Validation');
+legend('Measured p','Modelled p')
 
