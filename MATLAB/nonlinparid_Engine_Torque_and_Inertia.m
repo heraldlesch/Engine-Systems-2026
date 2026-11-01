@@ -18,7 +18,7 @@ options.enablePlot = 1;
 
 fprintf('\n Data Loaded. \n')
 
-%% Param ID - Intake Manifold Volume
+%% Param ID - Engine torque and inertia - 2.3.7
 % Define starting values of the optimization variables.
 par0 = [params.eta_0_guess, params.eta_1_guess, params.beta_0_guess, params.theta_e_guess]; 
 
@@ -45,13 +45,13 @@ fprintf('\n identified eta_1 = %d \n', params.eta_1)
 fprintf('\n identified beta_0 = %d \n', params.beta_0)
 fprintf('\n identified theta_e = %d \n', params.theta_e)
 
-%% Param Validation - Intake Manifold
+%% Param Validation - Engine torque and inertia
 % use val data
 data = val;
 
 out = sim('ParId_Engine_Torque_and_Inertia.slx', data.meas.u_alpha.time(end), options.sim_options);
-omega_e_valsim = out.omega_e.Data;   % extract pressure vector
-tvalsim = out.omega_e.Time;                  % extract time vector
+omega_e_valsim = out.omega_e.Data;  % extract inertia vector
+tvalsim = out.omega_e.Time;         % extract time vector
     
 % Graphically represent the quality of the optimization routine
 figure;

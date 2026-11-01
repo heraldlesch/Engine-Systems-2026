@@ -17,7 +17,7 @@ options.fig_num = length(fh)+1;
 options.enablePlot = 1;
 
 
-%% Throttle Parameters
+%% Throttle Parameters - 2.3.3
 %least squares procedure
 
 u_alpha = meas.u_alpha.signals.values;
@@ -32,7 +32,7 @@ alpha_1 = x(2);
 
 fprintf('\n Throttle Parameters identified and saved to workspace \n')
 
-%% Engine Mass Flow Parameters
+%% Engine Mass Flow Parameters - 2.3.4
 %least squares procedure
 
 omega_e = meas.omega_e.signals.values;
