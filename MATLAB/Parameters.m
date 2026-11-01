@@ -14,8 +14,8 @@ params.eta_gen = 0.7;
 
 %% identified parameters
 % Throttle Area
-params.alpha0 = 1.4177e-6;
-params.alpha1 = 5.8877e-6;
+params.alpha_0 = 1.4177e-6;
+params.alpha_1 = 5.8877e-6;
 % Intake Manifold
 params.Vm = 3.966146e-3;
 % Engine Air Mass FLow

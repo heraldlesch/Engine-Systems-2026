@@ -1,27 +1,37 @@
 clear; clc; close all;
 
-% Load data 
+%% Load Data
+
+% Load Parameters
+
 Parameters
+
 fprintf('\n Parameters loaded \n')
 
+% Load Measurement Data
 
-% simulate
-u_alpha_vec = 0:10:100;
-for i = 1:length(u_alpha_vec)
-    fprintf('\nstarting iter %d \n', i)
+% Quasistatic data for linear identification
+quasi = load(fullfile(projectFolder, 'Data', ...
+    'quasistatic_0001.mat'));
 
-    u_alpha = u_alpha_vec(i);
-    out = sim('NonlinearModel.slx');
-    
-    figure
-    plot(out.omega_e)
-    xlabel('t')
-    ylabel('\omega_e')
-    grid on
-    title(sprintf('u_alpha = %d', u_alpha))
-end
+% Dynamic data for nonlinear identification
+id = load(fullfile(projectFolder, 'Data', ...
+    'dynamic_0002.mat'));
 
-fprintf('\nsims finished \n')
+% Simulation Options
 
-run
+options.sim_options = simopt;
+options.enablePlot = false;
+options.fig_num = 1;
 
+%% Parameter identification
+
+% Linear Parameter Identification - Manifold
+
+params = linparid(params, quasi.meas);
+
+fprint('\nManifold volume identified\n');
+
+% Nonlinear parameter identification - Engine
+
+params = nonlinparid_Engine_Torque;
