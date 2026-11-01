@@ -21,12 +21,12 @@ params.Vm = 3.966146e-3;
 % Engine Air Mass FLow
 params.gamma_0 = 0.6279;
 params.gamma_1 = 9.8537e-4;
-% % Engine Torque Generation
-% params.eta_0 = ;
-% params.eta_1 = ;
-% params.beta_0 = ;
-% % Engine Inertia
-% params.theta_e = ;
+% Engine Torque Generation
+params.eta_0 = 0.3346;
+params.eta_1 = -2.577e-04;
+params.beta_0 = 7.939;
+% Engine Inertia
+params.theta_e = 0.16235;
 
 
 %% initial guess parameters
