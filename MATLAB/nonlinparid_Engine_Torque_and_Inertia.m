@@ -14,7 +14,7 @@ errorfnc_fminsearch = @(par0) Modelerror_Engine_Torque_and_Inertia(...
     par0, data, options, params);
 
 % Call fminsearch    
-opt_options = optimset('Algorithm','sqp','display','iter','Maxit',30);
+opt_options = optimset('Display','off','MaxIter',30);
 
 fprintf('\n Fminsearch started. \n')
 

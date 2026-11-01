@@ -20,16 +20,16 @@ runIdentification = false;
 Parameters
 fprintf('\n Parameters loaded \n')
 
+% Simulation Options
+options.sim_options = simopt;
+options.enablePlot = false;
+options.fig_num = 1;
+
 if runIdentification
 
     % Load Measurement Data
     quasi = load(fullfile(projectFolder, 'Data', 'quasistatic_0001.mat'));
     id = load(fullfile(projectFolder, 'Data', 'dynamic_0002.mat'));
-
-    % Simulation Options
-    options.sim_options = simopt;
-    options.enablePlot = false;
-    options.fig_num = 1;
 
     % Parameter identification
     params = linparid(params, quasi.meas); % 2.3.3 & 2.3.4
@@ -41,7 +41,6 @@ if runIdentification
 
     fprintf('\nAll parameters identified and saved.\n');
 
-    disp(params);
 
 else
 
@@ -51,3 +50,6 @@ else
     fprintf('\nPreviously identified parameters loaded.\n');
 
 end
+
+% Display parameters
+disp(params);
