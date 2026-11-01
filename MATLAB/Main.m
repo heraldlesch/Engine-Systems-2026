@@ -23,3 +23,5 @@ end
 
 fprintf('\nsims finished \n')
 
+run
+

@@ -1,23 +1,7 @@
-clear; close all; clc;
-
-%% LOAD DATA
-
-% Load Parameters
-Parameters
-fprintf('\n Parameters loaded \n')
-
-% Load measurement data for parameter identification
-load('quasistatic_0001.mat');
-
-% Find the number of open figures, so a new figure can be created and used
-% over and over again. This command is not necessarily needed but it is
-% nice to have.
-fh=findall(0,'type','figure');
-options.fig_num = length(fh)+1;
-options.enablePlot = 1;
-
+function params = linparid(params, meas)
 
 %% Throttle Parameters - 2.3.3
+
 %least squares procedure
 
 u_alpha = meas.u_alpha.signals.values;
@@ -27,12 +11,14 @@ y_tp = meas.m_dot_alpha.signals.values .* sqrt(2.*params.R.*meas.T_a.signals.val
 
 x = lsqr(M_tp,y_tp);
 
-alpha_0 = x(1);
-alpha_1 = x(2);
+% Assign identified parameters 
+params.alpha_0 = x(1);
+params.alpha_1 = x(2);
 
 fprintf('\n Throttle Parameters identified and saved to workspace \n')
 
 %% Engine Mass Flow Parameters - 2.3.4
+
 %least squares procedure
 
 omega_e = meas.omega_e.signals.values;
@@ -51,8 +37,12 @@ lambda_lomega = C_emf .* (theta_m .* m_dot_alpha) ./ (p_m .* omega_e .* lambda_l
 y_emf = lambda_lomega;
 
 x = lsqr(M_emf,y_emf);
-gamma_0 = x(1);
-gamma_1 = x(2);
+
+% Assign identified parameters 
+params.gamma_0 = x(1);
+params.gamma_1 = x(2);
 
 
 fprintf('\n Engine Mass Flow Parameters identified and saved to workspace \n')
+
+end
