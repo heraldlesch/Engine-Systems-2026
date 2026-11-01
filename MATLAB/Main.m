@@ -1,6 +1,6 @@
 clear; clc; close all;
 
-%% Setup Paths
+%% Setup Paths (Give Main.m access to the Data and Simulink folders)
 
 % Folder containing Main.m
 matlabFolder = fileparts(mfilename('fullpath'));
@@ -53,3 +53,45 @@ end
 
 % Display parameters
 disp(params);
+
+%% Validation of the identified parameters - 2.3.8
+
+% Load independent validation dataset
+val = load(fullfile(projectFolder, 'Data', 'dynamic_0003.mat'));
+
+% Rename it, as Simulink expects "data.meas..."
+data = val;
+
+% Initialize model states from val measurements (For the start)
+params.p_m0 = data.meas.p_m.signals.values(1);
+params.omega_e0 = data.meas.omega_e.signals.values(1);
+
+% Run the complete model with id parameters
+out = sim('ParId_Engine_Torque_and_Inertia', ...
+    data.meas.u_alpha.time(end), options.sim_options);
+
+% Compare measured and simulated engine speed
+
+% Measured engine speed (From val data)
+t_meas = data.meas.omega_e.time;
+omega_meas = data.meas.omega_e.signals.values;
+
+% Simulated engine speed
+t_sim = out.omega_e.Time;
+omega_sim = out.omega_e.Data;
+
+% Plot 
+rpmFactor = 60/(2*pi);
+
+figure;
+
+plot(t_meas, omega_meas*rpmFactor, 'b');
+hold on;
+plot(t_sim, omega_sim*rpmFactor, 'r');
+hold off;
+
+xlabel('Time [s]');
+ylabel('Engine speed [rpm]');
+title('Model Validation - 2.3.8');
+legend('Measured', 'Simulated');
+grid on;
