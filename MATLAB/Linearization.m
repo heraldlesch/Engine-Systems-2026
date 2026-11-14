@@ -18,4 +18,10 @@ omega_e = out.omega_e.Data;
 
 p_m = out.p_m.Data;
 
+% Store preliminary nominal values
+nom.u_alpha = u_alpha;
+nom.du_ign = du_ign_nom;
+nom.omega_e = omega_e(end);
+nom.p_m = p_m(end);
+
 end
