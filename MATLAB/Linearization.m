@@ -24,4 +24,46 @@ nom.du_ign = du_ign_nom;
 nom.omega_e = omega_e(end);
 nom.p_m = p_m(end);
 
+% Nominal delay times
+nom.tau_IPS = 2*pi / nom.omega_e;
+
+nom.tau_ign = 2*pi / (5*nom.omega_e);
+
+% Nominal inputs of the Padé delay elements
+nom.q_IPS = out.mdot_beta.Data(end) / nom.omega_e;
+
+%% 4th order Pade approximation
+
+% IPS delay
+[numIPS, denIPS] = pade(nom.tau_IPS, 4);
+
+sysIPS = ss(tf(numIPS, denIPS));
+
+[Aips, Bips, Cips, Dips] = ssdata(sysIPS);
+
+% Ignition delay
+[numIGN, denIGN] = pade(nom.tau_ign, 4);
+
+sysIGN = ss(tf(numIGN, denIGN));
+
+[Aign, Bign, Cign, Dign] = ssdata(sysIGN);
+
+% Initial conditions of normalized Padé elements
+x0ips = -(Aips \ Bips);
+
+x0ign = -(Aign \ Bign);
+
+% Store Padé variables
+nom.Aips = Aips;
+nom.Bips = Bips;
+nom.Cips = Cips;
+nom.Dips = Dips;
+nom.x0ips = x0ips;
+
+nom.Aign = Aign;
+nom.Bign = Bign;
+nom.Cign = Cign;
+nom.Dign = Dign;
+nom.x0ign = x0ign;
+
 end
