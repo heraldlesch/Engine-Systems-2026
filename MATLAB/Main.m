@@ -102,3 +102,7 @@ grid on;
 saved = load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
 
 nom = Linearization(saved.params, options);
+
+% Nominal inputs for the normalized model (equal to 1)
+u_alpha_norm = 1;
+u_ign_norm = 1;
