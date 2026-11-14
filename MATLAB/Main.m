@@ -95,3 +95,14 @@ ylabel('Engine speed [rpm]');
 title('Model Validation - 2.3.8');
 legend('Measured', 'Simulated');
 grid on;
+
+%% Linearization
+
+% Reload indentified parameters, so previous validation aren't carried over
+saved = load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
+
+nom = Linearization(saved.params, options);
+
+% Nominal inputs for the normalized model (equal to 1)
+u_alpha_norm = 1;
+u_ign_norm = 1;
