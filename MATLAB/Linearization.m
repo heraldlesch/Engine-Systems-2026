@@ -66,4 +66,28 @@ nom.Cign = Cign;
 nom.Dign = Dign;
 nom.x0ign = x0ign;
 
+x =[1,1, x0ign, x0ips];
+u = [nom.u_alpha, nom.du_ign];
+
+[A, B, C, D] = linmod('NonlinearModeNorml', x, u);
+
+options.sim_options = simset('Solver','ode1','FixedStep',1e-3,'SrcWorkspace','current');
+
+NonlinSim = sim('NonlinearModel.slx', saved.meas.time, options.sim_options);
+tValNonlinSim = NonlinSim.tout;
+omega_eValNonlinSim = NonlinSim.yout{1}.Values.Data;
+
+% get pressure response from linearized model
+LinSim = sim('LinearizedModel.slx', saved.meas.time, options.sim_options);
+tValLinSim = LinSim.tout;
+omega_eValLinSim = LinSim.yout{1}.Values.Data;
+
+figure;
+plot(tValNonlinSim, omega_eValNonlinSim, tValLinSim, omega_eValLinSim); 
+% ylim([0.05e4,3.6e4])
+% xlim([0,60])
+xlabel('Time [s]');
+ylabel('omega_e [rad/s]');
+legend('Nonlin Model','Linearized Model')
 end
+
