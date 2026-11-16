@@ -88,6 +88,14 @@ x_norm = [1;
 
 %% Validation of the linearized model 
 
+% Give the lin struct over to the function,
+% so it can call LinearizedModel correctly
+lin.As = As;
+lin.Bs = Bs;
+lin.Cs = Cs;
+lin.Ds = Ds;
+lin.nom = nom;
+
 PlotModelValidation('LinearizedModel', ...
     'dynamic_0003.mat', ...
-    projectFolder, params, options)
+    projectFolder, params, options, lin)

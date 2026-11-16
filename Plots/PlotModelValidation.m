@@ -1,6 +1,15 @@
-function PlotModelValidation(Model, FileName, projectFolder, params, options)
+function PlotModelValidation(Model, FileName, projectFolder, params, options, lin)
 
 % Takes a File from the Data folder and plots the input Model vs the data.
+
+% Distinguish between linear and nonlinear inputs
+if nargin >= 6
+    As = lin.As;
+    Bs = lin.Bs;
+    Cs = lin.Cs;
+    Ds = lin.Ds;
+    nom = lin.nom;
+end
 
 % Load independent validation dataset
 val = load(fullfile(projectFolder, 'Data', FileName));
