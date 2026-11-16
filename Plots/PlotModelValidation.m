@@ -1,4 +1,4 @@
-function Plot(FileName, Model, params)
+function PlotModelValidation(Model, FileName, projectFolder, params, options)
 
 % Takes a File from the Data folder and plots the input Model vs the data.
 
@@ -38,6 +38,10 @@ hold off;
 
 xlabel('Time [s]');
 ylabel('Engine speed [rpm]');
-title('Model Validation');
+title("Validation of """ + string(Model) + ...
+    """ on """ + string(FileName) + """", ...
+    'Interpreter', 'none');
 legend('Measured', 'Simulated');
 grid on;
+
+end
