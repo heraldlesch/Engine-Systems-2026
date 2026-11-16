@@ -1,22 +1,23 @@
-function nom = Linearization(params, options)
+function [nom, lin] = Linearization(params, options)
 
-%% 2.4.2 - Normalization and Linearization
+%% 2.4.2 - Normalization and Linearization - 1. and 3.
 
-% Starting guesses
-u_alpha = 2.5;      % Throttle command [%] 
-du_ign_nom = -20;   % Ignotion retardation [deg CA] 
+% Starting guesses - 1.
+u_alpha = 2.5;      % Throttle command [%]              They recommend 1.5 - 3 %
+du_ign_nom = -20;   % Ignotion retardation [deg CA]     They recommend -40 - -10 °CA
 
 tEnd = 60; % Simulation duration
 
-%% Run steady-state simulation
+
+%% Run steady-state simulation - 1.
 
 out = sim('NonlinearModel', tEnd, options.sim_options);
 
 % Extract simulation results
 t = out.omega_e.Time;
-omega_e = out.omega_e.Data;
+omega_e = out.omega_e.Data; %                           They recommend 70 - 200 rad/s
 
-p_m = out.p_m.Data;
+p_m = out.p_m.Data; %                                   They recommend 0.2 - 0.4 bar
 
 % Store preliminary nominal values
 nom.u_alpha = u_alpha;
@@ -32,7 +33,8 @@ nom.tau_ign = 2*pi / (5*nom.omega_e);
 % Nominal inputs of the Padé delay elements
 nom.q_IPS = out.mdot_beta.Data(end) / nom.omega_e;
 
-%% 4th order Pade approximation
+
+%% 4th order Pade approximation - 3.
 
 % IPS delay
 [numIPS, denIPS] = pade(nom.tau_IPS, 4);
@@ -66,28 +68,14 @@ nom.Cign = Cign;
 nom.Dign = Dign;
 nom.x0ign = x0ign;
 
-x =[1,1, x0ign, x0ips];
-u = [nom.u_alpha, nom.du_ign];
+u_norm = [1; 1];
+x_norm = [1; 1; nom.x0ips; nom.x0ign];
 
-[A, B, C, D] = linmod('NonlinearModeNorml', x, u);
+assignin('base', 'nom', nom); % This gives nom over to the Main Workspace, so Simulink can see it
 
-options.sim_options = simset('Solver','ode1','FixedStep',1e-3,'SrcWorkspace','current');
+[lin.As, lin.Bs, lin.Cs, lin.Ds] = ...
+    linmod('NonlinearModelNorm', x_norm, u_norm);
 
-NonlinSim = sim('NonlinearModel.slx', saved.meas.time, options.sim_options);
-tValNonlinSim = NonlinSim.tout;
-omega_eValNonlinSim = NonlinSim.yout{1}.Values.Data;
 
-% get pressure response from linearized model
-LinSim = sim('LinearizedModel.slx', saved.meas.time, options.sim_options);
-tValLinSim = LinSim.tout;
-omega_eValLinSim = LinSim.yout{1}.Values.Data;
-
-figure;
-plot(tValNonlinSim, omega_eValNonlinSim, tValLinSim, omega_eValLinSim); 
-% ylim([0.05e4,3.6e4])
-% xlim([0,60])
-xlabel('Time [s]');
-ylabel('omega_e [rad/s]');
-legend('Nonlin Model','Linearized Model')
 end
 
