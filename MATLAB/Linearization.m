@@ -8,6 +8,7 @@ du_ign_nom = -20;   % Ignotion retardation [deg CA]     They recommend -40 - -10
 
 tEnd = 60; % Simulation duration
 
+
 %% Run steady-state simulation
 
 out = sim('NonlinearModel', tEnd, options.sim_options);
@@ -31,6 +32,7 @@ nom.tau_ign = 2*pi / (5*nom.omega_e);
 
 % Nominal inputs of the Padé delay elements
 nom.q_IPS = out.mdot_beta.Data(end) / nom.omega_e;
+
 
 %% 4th order Pade approximation
 

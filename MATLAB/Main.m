@@ -1,5 +1,6 @@
 clear; clc; close all;
 
+
 %% Setup Paths (Give Main.m access to the Data and Simulink folders)
 
 % Folder containing Main.m
@@ -11,6 +12,7 @@ projectFolder = fileparts(matlabFolder);
 % Add MATLAB scripts and Simulink models to search path
 addpath(matlabFolder);
 addpath(fullfile(projectFolder, 'Simulink'));
+
 
 %% Load Data
 
@@ -54,6 +56,7 @@ end
 % Display parameters
 disp(params);
 
+
 %% Validation of the identified parameters - 2.3.8
 
 % Load independent validation dataset
@@ -96,9 +99,10 @@ title('Model Validation - 2.3.8');
 legend('Measured', 'Simulated');
 grid on;
 
-%% Linearization
 
-% Reload indentified parameters, so previous validation aren't carried over
+%% Linearization - 2.4.2
+
+% Reload identified parameters, so previous validation aren't carried over
 saved = load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
 
 nom = Linearization(saved.params, options);
@@ -116,3 +120,40 @@ x_norm = [1;
           nom.x0ign];
 
 [As, Bs, Cs, Ds] = linmod('NonlinearModelNorm', x_norm, u_norm);
+
+
+%% Validation of the linearized model (Just for testing)
+
+% Initialize model states from val measurements (For the start)
+params.p_m0 = data.meas.p_m.signals.values(1);
+params.omega_e0 = data.meas.omega_e.signals.values(1);
+
+% Run the complete model with id parameters
+out = sim('LinearizedModel', ...
+    data.meas.u_alpha.time(end), options.sim_options);
+
+% Compare measured and simulated engine speed
+
+% Measured engine speed (From val data)
+t_meas = data.meas.omega_e.time;
+omega_meas = data.meas.omega_e.signals.values;
+
+% Simulated engine speed
+t_sim = out.omega_e.Time;
+omega_sim = out.omega_e.Data;
+
+% Plot 
+rpmFactor = 60/(2*pi);
+
+figure;
+
+plot(t_meas, omega_meas*rpmFactor, 'b');
+hold on;
+plot(t_sim, omega_sim*rpmFactor, 'r');
+hold off;
+
+xlabel('Time [s]');
+ylabel('Engine speed [rpm]');
+title('Model Validation - 2.3.8');
+legend('Measured', 'Simulated');
+grid on;
