@@ -68,33 +68,14 @@ PlotModelValidation('ParId_Engine_Torque_and_Inertia', ...
 
 % Reload identified parameters, so previous validation aren't carried over
 saved = load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
+params = saved.params;
 
-nom = Linearization(saved.params, options);
+% Linearize the Model
+[nom, lin] = Linearization(params, options);
 
-% Nominal inputs for the normalized model
-u_alpha_norm = 1;
-u_ign_norm = 1;
-
-u_norm = [1; 
-          1];
-
-x_norm = [1;
-          1; 
-          nom.x0ips; 
-          nom.x0ign];
-
-[As, Bs, Cs, Ds] = linmod('NonlinearModelNorm', x_norm, u_norm);
-
+lin.nom = nom;
 
 %% Validation of the linearized model 
-
-% Give the lin struct over to the function,
-% so it can call LinearizedModel correctly
-lin.As = As;
-lin.Bs = Bs;
-lin.Cs = Cs;
-lin.Ds = Ds;
-lin.nom = nom;
 
 PlotModelValidation('LinearizedModel', ...
     'dynamic_0003.mat', ...

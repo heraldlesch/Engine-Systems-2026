@@ -1,4 +1,4 @@
-function nom = Linearization(params, options)
+function [nom, lin] = Linearization(params, options)
 
 %% 2.4.2 - Normalization and Linearization - 1. and 3.
 
@@ -68,28 +68,14 @@ nom.Cign = Cign;
 nom.Dign = Dign;
 nom.x0ign = x0ign;
 
-x =[1,1, x0ign, x0ips];
-u = [nom.u_alpha, nom.du_ign];
+u_norm = [1; 1];
+x_norm = [1; 1; nom.x0ips; nom.x0ign];
 
-[A, B, C, D] = linmod('NonlinearModeNorml', x, u);
+assignin('base', 'nom', nom); % This gives nom over to the Main Workspace, so Simulink can see it
 
-options.sim_options = simset('Solver','ode1','FixedStep',1e-3,'SrcWorkspace','current');
+[lin.As, lin.Bs, lin.Cs, lin.Ds] = ...
+    linmod('NonlinearModelNorm', x_norm, u_norm);
 
-NonlinSim = sim('NonlinearModel.slx', saved.meas.time, options.sim_options);
-tValNonlinSim = NonlinSim.tout;
-omega_eValNonlinSim = NonlinSim.yout{1}.Values.Data;
 
-% get pressure response from linearized model
-LinSim = sim('LinearizedModel.slx', saved.meas.time, options.sim_options);
-tValLinSim = LinSim.tout;
-omega_eValLinSim = LinSim.yout{1}.Values.Data;
-
-figure;
-plot(tValNonlinSim, omega_eValNonlinSim, tValLinSim, omega_eValLinSim); 
-% ylim([0.05e4,3.6e4])
-% xlim([0,60])
-xlabel('Time [s]');
-ylabel('omega_e [rad/s]');
-legend('Nonlin Model','Linearized Model')
 end
 
