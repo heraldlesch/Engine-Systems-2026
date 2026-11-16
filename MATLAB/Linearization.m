@@ -3,8 +3,8 @@ function nom = Linearization(params, options)
 %% 2.4.2 - Normalization and Linearization
 
 % Starting guesses
-u_alpha = 2.5;      % Throttle command [%] 
-du_ign_nom = -20;   % Ignotion retardation [deg CA] 
+u_alpha = 2.5;      % Throttle command [%]              They recommend 1.5 - 3 %
+du_ign_nom = -20;   % Ignotion retardation [deg CA]     They recommend -40 - -10 °CA
 
 tEnd = 60; % Simulation duration
 
@@ -14,9 +14,9 @@ out = sim('NonlinearModel', tEnd, options.sim_options);
 
 % Extract simulation results
 t = out.omega_e.Time;
-omega_e = out.omega_e.Data;
+omega_e = out.omega_e.Data; %                           They recommend 70 - 200 rad/s
 
-p_m = out.p_m.Data;
+p_m = out.p_m.Data; %                                   They recommend 0.2 - 0.4 bar
 
 % Store preliminary nominal values
 nom.u_alpha = u_alpha;
