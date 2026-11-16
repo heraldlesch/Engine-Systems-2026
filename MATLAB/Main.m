@@ -100,7 +100,7 @@ legend('Measured', 'Simulated');
 grid on;
 
 
-%% Linearization - 2.4.2
+%% Linearization - 2.4.2 - 5.
 
 % Reload identified parameters, so previous validation aren't carried over
 saved = load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
@@ -122,7 +122,7 @@ x_norm = [1;
 [As, Bs, Cs, Ds] = linmod('NonlinearModelNorm', x_norm, u_norm);
 
 
-%% Validation of the linearized model (Just for testing)
+%% Validation of the linearized model (Just for testing, can be delete later if not needed anymore)
 
 % Initialize model states from val measurements (For the start)
 params.p_m0 = data.meas.p_m.signals.values(1);

@@ -1,15 +1,15 @@
 function nom = Linearization(params, options)
 
-%% 2.4.2 - Normalization and Linearization
+%% 2.4.2 - Normalization and Linearization - 1. and 3.
 
-% Starting guesses
+% Starting guesses - 1.
 u_alpha = 2.5;      % Throttle command [%]              They recommend 1.5 - 3 %
 du_ign_nom = -20;   % Ignotion retardation [deg CA]     They recommend -40 - -10 °CA
 
 tEnd = 60; % Simulation duration
 
 
-%% Run steady-state simulation
+%% Run steady-state simulation - 1.
 
 out = sim('NonlinearModel', tEnd, options.sim_options);
 
@@ -34,7 +34,7 @@ nom.tau_ign = 2*pi / (5*nom.omega_e);
 nom.q_IPS = out.mdot_beta.Data(end) / nom.omega_e;
 
 
-%% 4th order Pade approximation
+%% 4th order Pade approximation - 3.
 
 % IPS delay
 [numIPS, denIPS] = pade(nom.tau_IPS, 4);
