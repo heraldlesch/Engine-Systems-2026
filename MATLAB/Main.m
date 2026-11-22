@@ -80,8 +80,135 @@ lin.nom = nom;
 PlotModelValidation('LinearizedModel', ...
     'dynamic_0003.mat', ...
     projectFolder, params, options, lin)
+%% TASK 6: Check System Matrices
+
+% Create continuous-time state-space model
+Plant_s = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
+
+% Determine dimensions
+[n_states, n_inputs] = size(lin.Bs);
+[n_outputs, n_states_C] = size(lin.Cs);
+
+fprintf('\n===== SYSTEM DIMENSIONS =====\n');
+
+fprintf('Number of states:  %d\n', n_states);
+fprintf('Number of inputs:  %d\n', n_inputs);
+fprintf('Number of outputs: %d\n', n_outputs);
+
+% Check consistency of dimensions
+assert(size(lin.As,1) == size(lin.As,2), ...
+    'As must be square.');
+
+assert(size(lin.As,1) == size(lin.Bs,1), ...
+    'As and Bs have inconsistent dimensions.');
+
+assert(size(lin.As,2) == size(lin.Cs,2), ...
+    'As and Cs have inconsistent dimensions.');
+
+assert(size(lin.Ds,1) == n_outputs && size(lin.Ds,2) == n_inputs, ...
+    'Ds has inconsistent dimensions.');
+
+% Check requirements
+fprintf('\n===== REQUIREMENT CHECK =====\n');
+
+if n_states == 10
+    disp('PASS: System has 10 states.');
+else
+    disp('FAIL: System does not have 10 states.');
+end
+
+if n_inputs == 2
+    disp('PASS: System has 2 inputs.');
+else
+    disp('FAIL: System does not have 2 inputs.');
+end
+
+if n_outputs == 1
+    disp('PASS: System has 1 output.');
+else
+    disp('FAIL: System does not have 1 output.');
+end
+
+% Check direct feedthrough
+if norm(lin.Ds,'fro') < 1e-12
+    disp('PASS: No direct feedthrough (Ds = 0).');
+else
+    disp('FAIL: Direct feedthrough is present.');
+end
+
+%% TASK 7: Analyze Step Response
+
+% Time vector for simulation
+t = 0:0.001:10;
+
+% Plot step responses of both inputs
+figure;
+step(Plant_s, t);
+
+grid on;
+title('Step Response of Linearized Engine Model');
+xlabel('Time [s]');
+ylabel('Engine Speed Response');
+
+legend('Throttle Input', 'Ignition Input');
+
+% Calculate step response data
+[y_step, t_step] = step(Plant_s, t);
+
+% Plot each input separately
+figure;
+
+subplot(2,1,1);
+plot(t_step, y_step(:,1,1), 'LineWidth', 1.5);
+grid on;
+title('Step Response - Throttle Input');
+xlabel('Time [s]');
+ylabel('Speed Deviation');
+
+subplot(2,1,2);
+plot(t_step, y_step(:,1,2), 'LineWidth', 1.5);
+grid on;
+title('Step Response - Ignition Input');
+xlabel('Time [s]');
+ylabel('Speed Deviation');
+
+% Check stability
+fprintf('\n===== SYSTEM STABILITY =====\n');
+
+if isstable(Plant_s)
+    disp('Linearized system is stable.');
+else
+    disp('Linearized system is unstable or marginally stable.');
+end
+
+% Display poles
+disp('Poles of linearized system:');
+disp(pole(Plant_s));
+
+%% TASK 8: Calculate Condition Numbers
+
+fprintf('\n===== CONDITION NUMBERS =====\n');
+
+cond_As = cond(lin.As);
+cond_Bs = cond(lin.Bs);
+cond_Cs = cond(lin.Cs);
+cond_Ds = cond(lin.Ds);
+
+fprintf('Condition number As: %.4e\n', cond_As);
+fprintf('Condition number Bs: %.4e\n', cond_Bs);
+fprintf('Condition number Cs: %.4e\n', cond_Cs);
+fprintf('Condition number Ds: %.4e\n', cond_Ds);
+
+% Display condition numbers in a table
+Matrix = {'As'; 'Bs'; 'Cs'; 'Ds'};
+ConditionNumber = [cond_As; cond_Bs; cond_Cs; cond_Ds];
+
+ConditionTable = table(Matrix, ConditionNumber);
+
+disp(ConditionTable);
+
 % Integral gain
-KI = 0.5;  % Initialwert, beispielhaft
+KI = 0.5;  
 
 % Extension matrices
 Ae = 0;
@@ -149,9 +276,12 @@ end
 % Direct feed-trough matrix of the controller
 Dc_pre = zeros(2,1);
 
+% Zero matrix for Ac
+Zero_block = zeros(size(A,1), size(Ae,1));
+
 % Controller-Matrices
 Ac = [Ae,       -Be*K;
-    -L,         A-B*K-L*C];
+    Zero_block,         A-B*K-L*C];
 
 Bc = [Be*Dc_pre;
     -L];
@@ -166,9 +296,54 @@ Controller_c = ss(Ac, Bc, Cc, Dc);
 %% Check stability of the controller-system
 p_controller = eig(Ac);
 
-if all(real(p_controller) < 0)
+if all(real(p_controller) <= 0)
     disp('Controller is internally stable.');
 else
     disp('Caution: Controller has unstable or limited stable Poles.');
 end
+
+Plant = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
+
+Lopen = Plant * Controller_c;
+
+w = logspace(-3, 3, 10000);
+Ljw = squeeze(freqresp(Lopen, w));
+
+mu = min(abs(1 + Ljw));
+
+fprintf('Minimum return difference mu = %.4f\n', mu);
+
+
+[Gm, Pm, Wcg, Wcp] = margin(Lopen);
+
+fprintf('Gain crossover frequency = %.4f rad/s\n', Wcp);
+
+%Discretize the Controller
+
+Ts = 0.001;
+
+Controller_d = c2d(Controller_c, Ts, 'tustin');
+
+[Ad, Bd, Cd, Dd] = ssdata(Controller_d);
+
+tEnd = 10; % Simulation duration
+
+
+%% Run simulation
+
+out = sim('ControllerTestModel', tEnd, options.sim_options);
+
+% Extract simulation results
+t_test = out.omega_e.Time;
+omega_e_test = out.omega_e.Data; 
+t_test_in = out.omega_ref.Time;
+omega_ref_test = out.omega_ref.Data;
+
+figure;
+plot(t_test, omega_e_test, t_test_in, omega_ref_test); 
+% ylim([0.05e4,3.6e4])
+% xlim([0,60])
+xlabel('Time [s]');
+ylabel('Engine speed [rad]');
+legend('Output','Reference')
 
