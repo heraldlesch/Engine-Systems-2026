@@ -9,9 +9,11 @@ matlabFolder = fileparts(mfilename('fullpath'));
 % Project root folder
 projectFolder = fileparts(matlabFolder);
 
-% Add MATLAB scripts and Simulink models to search path
+% Add remaining folders in project folder to search path
 addpath(matlabFolder);
 addpath(fullfile(projectFolder, 'Simulink'));
+addpath(fullfile(projectFolder, 'Plots'));
+addpath(fullfile(projectFolder, 'Data'));
 
 
 %% Load Data
@@ -30,8 +32,8 @@ options.fig_num = 1;
 if runIdentification
 
     % Load Measurement Data
-    quasi = load(fullfile(projectFolder, 'Data', 'quasistatic_0001.mat'));
-    id = load(fullfile(projectFolder, 'Data', 'dynamic_0002.mat'));
+    quasi = load('quasistatic_0001.mat');
+    id = load('dynamic_0002.mat');
 
     % Parameter identification
     params = linparid(params, quasi.meas); % 2.3.3 & 2.3.4
@@ -43,11 +45,10 @@ if runIdentification
 
     fprintf('\nAll parameters identified and saved.\n');
 
-
 else
 
     % Load previously identified parameters
-    load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
+    load('identified_params.mat');
 
     fprintf('\nPreviously identified parameters loaded.\n');
 
@@ -56,30 +57,23 @@ end
 % Display parameters
 disp(params);
 
-
 %% Validation of the identified parameters - 2.3.8
+% with one of these -> 'dynamic_0003.mat' 'studentId_0004.mat' 'studentId_0005.mat' 
 
-PlotModelValidation('ParId_Engine_Torque_and_Inertia', ...
-    'dynamic_0003.mat', ...
+PlotModelValidation('ParId_Engine_Torque_and_Inertia', 'dynamic_0003.mat', ...
     projectFolder, params, options);
 
 
 %% Linearization - 2.4.2 - 5.
 
-% Reload identified parameters, so previous validation aren't carried over
-saved = load(fullfile(matlabFolder, 'identified_params.mat'), 'params');
-params = saved.params;
-
-% Linearize the Model
 [nom, lin] = Linearization(params, options);
-
 lin.nom = nom;
 
 %% Validation of the linearized model 
 
-PlotModelValidation('LinearizedModel', ...
-    'dynamic_0003.mat', ...
+PlotModelValidation('LinearizedModel', 'dynamic_0003.mat', ...
     projectFolder, params, options, lin)
+
 %% TASK 6: Check System Matrices
 
 % Create continuous-time state-space model
@@ -207,6 +201,9 @@ ConditionTable = table(Matrix, ConditionNumber);
 
 disp(ConditionTable);
 
+%% Controller Synthesis
+%% 1) linearized system is extended by an integrator acting on u_alpha
+
 % Integral gain
 KI = 0.5;  
 
@@ -219,26 +216,31 @@ De = eye(2);
 % Extended plant
 A = [lin.As, lin.Bs*Ce;
     zeros(1,size(lin.As,2)), Ae];
-
 B = [lin.Bs*De;
     Be];
-
 C = [lin.Cs, lin.Ds*Ce];
 D = lin.Ds*De;
 
-r1 = 6;
-r2 = 10;
+%% 2) state feedback gain K is designed
+
+r1 = 6;  % penalization of u_alpha
+r2 = 10; % penalization of delta_u_zeta
+R = diag([r1 r2]);
 
 Q = C' * C;
-R = diag([r1 r2]);
 
 K = lqr(A,B,Q,R);
 
-% Observer tuning parameter
+%% 3) State observer is built and checked for quality
+
+% Observer tuning parameter q:
+% q -> 0:   fast observer, trust measurement
+% q -> inf: slow observer, trust model
 q = 0.1;
 
-% Observer gain
+% get observer gain
 L = lqr(A', C', B*B', q)';
+
 
 % Closed-loop poles
 poles_controller = eig(A - B*K);
@@ -271,7 +273,7 @@ else
     disp('Observer is unstable')
 end
 
-% LQGI Controller Matrix Synthesis
+%% 4) LQGI Controller Matrix Synthesis
 
 % Direct feed-trough matrix of the controller
 Dc_pre = zeros(2,1);
@@ -290,47 +292,39 @@ Cc = [Ce, -De*K];
 
 Dc = De*Dc_pre;
 
-%% Build continuous controller
+%% 5) Check stability of controller and discretize continuous controller
+
+% continuous controller
 Controller_c = ss(Ac, Bc, Cc, Dc);
 
-%% Check stability of the controller-system
+% 5.1) Check stability of the controller-system
 p_controller = eig(Ac);
-
 if all(real(p_controller) <= 0)
     disp('Controller is internally stable.');
 else
     disp('Caution: Controller has unstable or limited stable Poles.');
 end
 
+% Assemble Controller-Plant-system 
 Plant = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
-
 Lopen = Plant * Controller_c;
 
 w = logspace(-3, 3, 10000);
 Ljw = squeeze(freqresp(Lopen, w));
-
 mu = min(abs(1 + Ljw));
-
 fprintf('Minimum return difference mu = %.4f\n', mu);
-
 
 [Gm, Pm, Wcg, Wcp] = margin(Lopen);
 
 fprintf('Gain crossover frequency = %.4f rad/s\n', Wcp);
 
-%Discretize the Controller
-
-Ts = 0.001;
-
+% 5.2) Discretize the Controller
+Ts = 0.001; % sampling rate - must be 0.001
 Controller_d = c2d(Controller_c, Ts, 'tustin');
-
 [Ad, Bd, Cd, Dd] = ssdata(Controller_d);
 
-tEnd = 10; % Simulation duration
-
-
-%% Run simulation
-
+%% Test the controller with a trial sim
+tEnd = 30; % Simulation duration
 out = sim('ControllerTestModel', tEnd, options.sim_options);
 
 % Extract simulation results
