@@ -62,4 +62,4 @@ params.omega_e0 = 75;
 % sim options
 simopt = simset('Solver','ode1','FixedStep',1e-3,'SrcWorkspace','current');
 
-    
+
