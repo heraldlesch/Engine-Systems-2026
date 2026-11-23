@@ -82,7 +82,26 @@ PlotModelValidation('LinearizedModel', 'dynamic_0003.mat', ...
 LinearizedModelCheck
 
 %% Controller Synthesis
-ControllerSynthesis
+
+% Tuning
+tuning.KI = 0.5;
+tuning.r1 = 6;
+tuning.r2 = 10;
+tuning.q = 0.1; % q -> 0: fast observer, trust measurement; q -> inf: slow observer, trust model 
+tuning.Ts = 0.001; % sampling rate - must be 0.001
+
+% Build controller
+ctrl = ControllerSynthesis(lin, tuning);
+
+% Extract controller matrices for Simulink
+Ad = ctrl.Ad;
+Bd = ctrl.Bd;
+Cd = ctrl.Cd;
+Dd = ctrl.Dd;
+
+% Normalization matrices
+ISCS_Tu = diag([nom.u_alpha, nom.du_ign]);
+ISCS_Ty = nom.omega_e;
 
 %% Test the controller with a trial sim
 % tEnd = 10; % Simulation duration

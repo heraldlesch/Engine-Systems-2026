@@ -1,12 +1,12 @@
-%% 1) linearized system is extended by an integrator acting on u_alpha
+function ctrl = ControllerSynthesis(lin, tuning)
 
-% Integral gain
-KI = 0.5;   % tunable
+
+%% 1) linearized system is extended by an integrator acting on u_alpha
 
 % Extension matrices
 Ae = 0;
 Be = [1 0];
-Ce = [KI; 0];
+Ce = [tuning.KI; 0];
 De = eye(2);
 
 % Extended plant
@@ -19,9 +19,7 @@ D = lin.Ds*De;
 
 %% 2) state feedback gain K is designed
 
-r1 = 6;  % penalization of u_alpha  % tunable
-r2 = 10; % penalization of delta_u_zeta % tunable
-R = diag([r1 r2]);
+R = diag([tuning.r1 tuning.r2]);
 
 Q = C' * C;
 
@@ -29,14 +27,8 @@ K = lqr(A,B,Q,R);
 
 %% 3) State observer is built and checked for quality
 
-% Observer tuning parameter q:
-% q -> 0:   fast observer, trust measurement
-% q -> inf: slow observer, trust model
-q = 0.1; % tunable
-
 % get observer gain
-L = lqr(A', C', B*B', q)';
-
+L = lqr(A', C', B*B', tuning.q)';
 
 % Closed-loop poles
 poles_controller = eig(A - B*K);
@@ -115,6 +107,38 @@ fprintf('Minimum return difference mu = %.4f\n', mu);
 fprintf('Gain crossover frequency = %.4f rad/s\n', Wcp);
 
 % 5.2) Discretize the Controller
-Ts = 0.001; % sampling rate - must be 0.001
-Controller_d = c2d(Controller_c, Ts, 'tustin');
+Controller_d = c2d(Controller_c, tuning.Ts, 'tustin');
 [Ad, Bd, Cd, Dd] = ssdata(Controller_d);
+
+
+%% Return controller results
+
+% Extended plant
+ctrl.A = A;
+ctrl.B = B;
+ctrl.C = C;
+ctrl.D = D;
+
+% Feedback and observer gains
+ctrl.K = K;
+ctrl.L = L;
+
+% Continuous controller
+ctrl.Ac = Ac;
+ctrl.Bc = Bc;
+ctrl.Cc = Cc;
+ctrl.Dc = Dc;
+
+% Discrete controller
+ctrl.Ad = Ad;
+ctrl.Bd = Bd;
+ctrl.Cd = Cd;
+ctrl.Dd = Dd;
+
+% Complete state-space objects
+ctrl.Controller_c = Controller_c;
+ctrl.Controller_d = Controller_d;
+ctrl.Plant = Plant;
+
+
+end

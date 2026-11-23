@@ -68,5 +68,6 @@ assignin('base', 'nom', nom);
 % get matrices
 [lin.As, lin.Bs, lin.Cs, lin.Ds] = linmod('NonlinearModelNorm', x_norm, u_norm);
 
+
 end
 
