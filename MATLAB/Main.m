@@ -74,11 +74,11 @@ lin.nom = nom;
 
 %% Validation of the linearized model 
 
-% compare linearized sim output with measurments
+% Compare linearized sim output with measurments
 PlotModelValidation('LinearizedModel', 'dynamic_0003.mat', ...
     projectFolder, params, options, lin)
 
-% check linearized system behavior
+% Check linearized system behavior
 LinearizedModelCheck
 
 %% Controller Synthesis
