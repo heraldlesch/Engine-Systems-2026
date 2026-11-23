@@ -85,13 +85,30 @@ Dc = De*Dc_pre;
 % continuous controller
 Controller_c = ss(Ac, Bc, Cc, Dc);
 
-% 5.1) Check stability of the controller-system
-p_controller = eig(Ac);
-if all(real(p_controller) <= 0)
-    disp('Controller is internally stable.');
+% 5.1) Check closed loop stability 
+% (apparently controller stability only doesn't make sense)  
+
+% Combined plant-controller matrix (by inserting one into the other)
+Acl_c = [    lin.As, lin.Bs*Cc;
+         -Bc*lin.Cs,        Ac];
+
+% Compute eigenvalues
+poles_closed_c = eig(Acl_c);
+
+% Check asymptotic stability
+tol = 1e-8;
+stable_closed_c = all(real(poles_closed_c) < -tol);
+
+fprintf('\n============== CLOSED-LOOP STABILITY ==============\n')
+
+if stable_closed_c
+    disp('Continuous closed loop is stable.');
 else
-    disp('Caution: Controller has unstable or limited stable Poles.');
+    warning('Continuous closed loop is not asymptotically stable.');
 end
+
+fprintf('Largest pole real part: %.4f\n', ...
+    max(real(poles_closed_c)));
 
 % Assemble Controller-Plant-system 
 Plant = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
