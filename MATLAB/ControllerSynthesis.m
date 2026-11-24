@@ -31,25 +31,25 @@ K = lqr(A,B,Q,R);
 L = lqr(A', C', B*B', tuning.q)';
 
 % Closed-loop poles
-poles_controller = eig(A - B*K);
+poles_feedback = eig(A - B*K);
 
 % Observer poles
 poles_observer = eig(A - L*C);
 
 disp('Closed-loop poles:')
-disp(poles_controller)
+disp(poles_feedback)
 
 disp('Observer poles:')
 disp(poles_observer)
 
 % Compare dominant decay rates
 ratio = abs(max(real(poles_observer))) / ...
-    abs(max(real(poles_controller)));
+    abs(max(real(poles_feedback)));
 
 disp('Observer/controller speed ratio:')
 disp(ratio)
 
-if all(real(poles_controller) < 0)
+if all(real(poles_feedback) < 0)
     disp('Controller is stable')
 else
     disp('Controller is unstable')
@@ -85,8 +85,7 @@ Dc = De*Dc_pre;
 % continuous controller
 Controller_c = ss(Ac, Bc, Cc, Dc);
 
-% 5.1) Check closed loop stability 
-% (apparently controller stability only doesn't make sense)  
+% 5.1) Check closed loop stability
 
 % Combined plant-controller matrix (by inserting one into the other)
 Acl_c = [    lin.As, lin.Bs*Cc;
@@ -126,6 +125,10 @@ fprintf('Gain crossover frequency = %.4f rad/s\n', Wcp);
 % 5.2) Discretize the Controller
 Controller_d = c2d(Controller_c, tuning.Ts, 'tustin');
 [Ad, Bd, Cd, Dd] = ssdata(Controller_d);
+
+% ... and the plant
+Plant_d = c2d(Plant, Ts, 'zoh');
+[Ap, Bp, Cp, Dp] = ssdata(Plant_d);
 
 
 %% Return controller results
