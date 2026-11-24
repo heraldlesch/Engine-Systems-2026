@@ -74,31 +74,99 @@ lin.nom = nom;
 
 %% Validation of the linearized model 
 
-% compare linearized sim output with measurments
+% Compare linearized sim output with measurments
 PlotModelValidation('LinearizedModel', 'dynamic_0003.mat', ...
     projectFolder, params, options, lin)
 
-% check linearized system behavior
+% Check linearized system behavior
 LinearizedModelCheck
 
 %% Controller Synthesis
-ControllerSynthesis
 
-%% Test the controller with a trial sim
-% tEnd = 10; % Simulation duration
-% out = sim('ControllerTestModel', tEnd, options.sim_options);
-% 
-% % Extract simulation results
-% t_test = out.omega_e.Time;
-% omega_e_test = out.omega_e.Data; 
-% t_test_in = out.omega_ref.Time;
-% omega_ref_test = out.omega_ref.Data;
-% 
-% figure;
-% plot(t_test, omega_e_test, t_test_in, omega_ref_test); 
-% % ylim([0.05e4,3.6e4])
-% % xlim([0,60])
-% xlabel('Time [s]');
-% ylabel('Engine speed [rad]');
-% legend('Output','Reference')
+% Tuning
+tuning.KI = 0.5;
+tuning.r1 = 6;
+tuning.r2 = 10;
+tuning.q = 0.1; % q -> 0: fast observer, trust measurement; q -> inf: slow observer, trust model 
+tuning.Ts = 0.001; % sampling rate - must be 0.001
+
+% Build controller
+ctrl = ControllerSynthesis(lin, tuning);
+
+% Extract controller matrices for Simulink
+Ad = ctrl.Ad;
+Bd = ctrl.Bd;
+Cd = ctrl.Cd;
+Dd = ctrl.Dd;
+
+% Normalization matrices
+ISCS_Tu = diag([nom.u_alpha, nom.du_ign]);
+ISCS_Ty = nom.omega_e;
+
+
+%% Test controller on nonlinear engine (move this to the plots folder later)
+
+fprintf('\n============== NONLINEAR CONTROLLER TEST ==============\n');
+
+% Longer simulation because the current controller has slow poles
+tEnd = 60;
+
+% Run nonlinear closed-loop Simulink model
+out = sim('ControllerTestModel', tEnd, options.sim_options);
+
+% Extract logged engine speed and reference
+t = out.omega_e.Time;
+omega = out.omega_e.Data;
+
+t_ref = out.omega_ref.Time;
+omega_ref = out.omega_ref.Data;
+
+% Plot closed-loop response
+figure;
+
+plot(t, omega, 'LineWidth', 1.5);
+hold on;
+
+plot(t_ref, omega_ref, '--', 'LineWidth', 1.5);
+
+yline(50, ':r', 'Stall threshold');
+
+xlabel('Time [s]');
+ylabel('Engine speed [rad/s]');
+title('Nonlinear Engine - Closed-Loop Speed Tracking');
+legend('Actual speed', 'Reference speed', ...
+    'Minimum allowed speed', 'Location', 'best');
+
+grid on;
+
+% GPT PLOT FOR COMPARING BOTH INPUTS: (Delete or move to plots folder later)
+% Plot engine speed and actuator commands
+
+figure;
+
+subplot(3,1,1);
+plot(out.omega_e.Time, out.omega_e.Data, 'LineWidth', 1.5);
+hold on;
+yline(130, '--', 'Reference');
+xline(30, ':', 'Load ON');
+ylabel('Speed [rad/s]');
+grid on;
+
+subplot(3,1,2);
+plot(out.u_alpha_cmd.Time, out.u_alpha_cmd.Data, ...
+    'LineWidth', 1.5);
+hold on;
+xline(30, ':', 'Load ON');
+ylabel('Throttle [%]');
+grid on;
+
+subplot(3,1,3);
+plot(out.du_ign_cmd.Time, out.du_ign_cmd.Data, ...
+    'LineWidth', 1.5);
+hold on;
+xline(30, ':', 'Load ON');
+ylabel('Ignition [deg CA]');
+xlabel('Time [s]');
+grid on;
+
 
