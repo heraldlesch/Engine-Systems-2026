@@ -103,24 +103,6 @@ Dd = ctrl.Dd;
 ISCS_Tu = diag([nom.u_alpha, nom.du_ign]);
 ISCS_Ty = nom.omega_e;
 
-% %% Test the controller with a trial sim
-% tEnd = 10; % Simulation duration
-% out = sim('ControllerTestModel', tEnd, options.sim_options);
-% 
-% % Extract simulation results
-% t_test = out.omega_e.Time;
-% omega_e_test = out.omega_e.Data; 
-% t_test_in = out.omega_ref.Time;
-% omega_ref_test = out.omega_ref.Data;
-% 
-% figure;
-% plot(t_test, omega_e_test, t_test_in, omega_ref_test); 
-% % ylim([0.05e4,3.6e4])
-% % xlim([0,60])
-% xlabel('Time [s]');
-% ylabel('Engine speed [rad]');
-% legend('Output','Reference')
-
 
 %% Test controller on nonlinear engine
 
