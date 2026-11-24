@@ -30,10 +30,10 @@ K = lqr(A,B,Q,R);
 % get observer gain
 L = lqr(A', C', B*B', tuning.q)';
 
-% Closed-loop poles
+% Closed-loop poles - To check whether all 11 modes decay
 poles_feedback = eig(A - B*K);
 
-% Observer poles
+% Observer poles - To check whether the estimation error converges to zero
 poles_observer = eig(A - L*C);
 
 disp('Ideal state-feedback poles (A-BK):')
@@ -82,20 +82,38 @@ Dc = De*Dc_pre;
 
 %% 5) Check stability of controller and discretize continuous controller
 
-% continuous controller
+% Continuous-time controller and plant
 Controller_c = ss(Ac, Bc, Cc, Dc);
-
-% Assemble Controller-Plant-system 
 Plant = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
-Lopen = Plant * Controller_c;
 
-% 5.1) Check closed loop stability
+%% 5.1) Open-loop frequency-domain analysis
+
+% Series connection: L(s) = P(s)*C(s)
+Lopen_c = Plant * Controller_c;
+
+% Minimum return difference
+w = logspace(-3, 3, 10000);
+Ljw = squeeze(freqresp(Lopen_c, w));
+
+mu = min(abs(1 + Ljw));
+
+fprintf('\n============== OPEN-LOOP ANALYSIS ==============\n');
+fprintf('Minimum return difference mu = %.4f\n', mu);
+
+% Gain/phase margins and crossover frequency
+[Gm, Pm, Wcg, Wcp] = margin(Lopen_c);
+
+fprintf('Gain crossover frequency = %.4f rad/s\n', Wcp);
+fprintf('Phase margin = %.4f deg\n', Pm);
+
+
+%% 5.2) Closed-loop stability
 
 % Combined plant-controller matrix
-Tclosed = feedback(Lopen, 1);
+Tclosed_c = feedback(Lopen_c, 1);
 
-% Compute eigenvalues
-poles_closed_c = eig(Tclosed);
+% Obtain the poles
+poles_closed_c = pole(Tclosed_c);
 
 % Check asymptotic stability
 tol = 1e-8;
@@ -112,25 +130,41 @@ end
 fprintf('Largest pole real part: %.4f\n', ...
     max(real(poles_closed_c)));
 
+%% 5.3) Discretization
 
-
-w = logspace(-3, 3, 10000);
-Ljw = squeeze(freqresp(Lopen, w));
-mu = min(abs(1 + Ljw));
-fprintf('Minimum return difference mu = %.4f\n', mu);
-
-[Gm, Pm, Wcg, Wcp] = margin(Lopen);
-
-fprintf('Gain crossover frequency = %.4f rad/s\n', Wcp);
-
-% 5.2) Discretize the Controller
+% Discretize the controller
 Controller_d = c2d(Controller_c, tuning.Ts, 'tustin');
 [Ad, Bd, Cd, Dd] = ssdata(Controller_d);
 
 % ... and the plant
-Plant_d = c2d(Plant, Ts, 'zoh');
+Plant_d = c2d(Plant, tuning.Ts, 'zoh');
 [Ap, Bp, Cp, Dp] = ssdata(Plant_d);
 
+% 5.4) Discrete closed-loop stability
+
+% Discrete series connection: L(s) = P(s)*C(s)
+Lopen_d = Plant_d * Controller_d;
+
+% Close negative feedback loop
+Tclosed_d = feedback(Lopen_d, 1);
+
+% Calculate discrete closed-loop poles
+poles_closed_d = pole(Tclosed_d);
+
+% Discrete stability: all poles inside unit circle
+rho = max(abs(poles_closed_d));
+
+stable_closed_d = rho < 1;
+
+fprintf('\n============= DISCRETE CLOSED-LOOP STABILITY =============\n');
+
+if stable_closed_d
+    disp('Discrete closed loop is asymptotically stable.');
+else
+    warning('Discrete closed loop is NOT asymptotically stable.');
+end
+
+fprintf('Maximum pole magnitude = %.8f\n', rho);
 
 %% Return controller results
 
