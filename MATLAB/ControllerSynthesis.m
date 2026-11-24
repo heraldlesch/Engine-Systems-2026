@@ -36,29 +36,29 @@ poles_feedback = eig(A - B*K);
 % Observer poles
 poles_observer = eig(A - L*C);
 
-disp('Closed-loop poles:')
+disp('Ideal state-feedback poles (A-BK):')
 disp(poles_feedback)
 
-disp('Observer poles:')
+disp('Observer estimation-error poles (A-LC):')
 disp(poles_observer)
 
 % Compare dominant decay rates
 ratio = abs(max(real(poles_observer))) / ...
     abs(max(real(poles_feedback)));
 
-disp('Observer/controller speed ratio:')
+disp('Observer/state-feedback decay-rate ratio:')
 disp(ratio)
 
 if all(real(poles_feedback) < 0)
-    disp('Controller is stable')
+    disp('Ideal state-feedback system is asymptotically stable.')
 else
-    disp('Controller is unstable')
+    disp('Ideal state-feedback system is NOT asymptotically stable.')
 end
 
 if all(real(poles_observer) < 0)
-    disp('Observer is stable')
+    disp('Observer estimation-error dynamics are asymptotically stable.')
 else
-    disp('Observer is unstable')
+    disp('Observer estimation-error dynamics are NOT asymptotically stable.')
 end
 
 %% 4) LQGI Controller Matrix Synthesis
@@ -85,14 +85,17 @@ Dc = De*Dc_pre;
 % continuous controller
 Controller_c = ss(Ac, Bc, Cc, Dc);
 
+% Assemble Controller-Plant-system 
+Plant = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
+Lopen = Plant * Controller_c;
+
 % 5.1) Check closed loop stability
 
-% Combined plant-controller matrix (by inserting one into the other)
-Acl_c = [    lin.As, lin.Bs*Cc;
-         -Bc*lin.Cs,        Ac];
+% Combined plant-controller matrix
+Tclosed = feedback(Lopen, 1);
 
 % Compute eigenvalues
-poles_closed_c = eig(Acl_c);
+poles_closed_c = eig(Tclosed);
 
 % Check asymptotic stability
 tol = 1e-8;
@@ -109,9 +112,7 @@ end
 fprintf('Largest pole real part: %.4f\n', ...
     max(real(poles_closed_c)));
 
-% Assemble Controller-Plant-system 
-Plant = ss(lin.As, lin.Bs, lin.Cs, lin.Ds);
-Lopen = Plant * Controller_c;
+
 
 w = logspace(-3, 3, 10000);
 Ljw = squeeze(freqresp(Lopen, w));
