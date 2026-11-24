@@ -140,7 +140,7 @@ Controller_d = c2d(Controller_c, tuning.Ts, 'tustin');
 Plant_d = c2d(Plant, tuning.Ts, 'zoh');
 [Ap, Bp, Cp, Dp] = ssdata(Plant_d);
 
-% 5.4) Discrete closed-loop stability
+%% 5.4) Discrete closed-loop stability
 
 % Discrete series connection: L(s) = P(s)*C(s)
 Lopen_d = Plant_d * Controller_d;

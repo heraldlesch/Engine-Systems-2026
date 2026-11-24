@@ -121,3 +121,39 @@ ISCS_Ty = nom.omega_e;
 % ylabel('Engine speed [rad]');
 % legend('Output','Reference')
 
+
+%% Test controller on nonlinear engine
+
+fprintf('\n========== NONLINEAR CONTROLLER TEST ==========\n');
+
+% Longer simulation because the current controller has slow poles
+tEnd = 60;
+
+% Run nonlinear closed-loop Simulink model
+out = sim('ControllerTestModel', tEnd, options.sim_options);
+
+% Extract logged engine speed and reference
+t = out.omega_e.Time;
+omega = out.omega_e.Data;
+
+t_ref = out.omega_ref.Time;
+omega_ref = out.omega_ref.Data;
+
+% Plot closed-loop response
+figure;
+
+plot(t, omega, 'LineWidth', 1.5);
+hold on;
+
+plot(t_ref, omega_ref, '--', 'LineWidth', 1.5);
+
+yline(50, ':r', 'Stall threshold');
+
+xlabel('Time [s]');
+ylabel('Engine speed [rad/s]');
+title('Nonlinear Engine - Closed-Loop Speed Tracking');
+legend('Actual speed', 'Reference speed', ...
+    'Minimum allowed speed', 'Location', 'best');
+
+grid on;
+
