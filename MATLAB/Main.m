@@ -104,9 +104,9 @@ ISCS_Tu = diag([nom.u_alpha, nom.du_ign]);
 ISCS_Ty = nom.omega_e;
 
 
-%% Test controller on nonlinear engine
+%% Test controller on nonlinear engine (move this to the plots folder later)
 
-fprintf('\n========== NONLINEAR CONTROLLER TEST ==========\n');
+fprintf('\n============== NONLINEAR CONTROLLER TEST ==============\n');
 
 % Longer simulation because the current controller has slow poles
 tEnd = 60;
@@ -138,4 +138,35 @@ legend('Actual speed', 'Reference speed', ...
     'Minimum allowed speed', 'Location', 'best');
 
 grid on;
+
+% GPT PLOT FOR COMPARING BOTH INPUTS: (Delete or move to plots folder later)
+% Plot engine speed and actuator commands
+
+figure;
+
+subplot(3,1,1);
+plot(out.omega_e.Time, out.omega_e.Data, 'LineWidth', 1.5);
+hold on;
+yline(130, '--', 'Reference');
+xline(30, ':', 'Load ON');
+ylabel('Speed [rad/s]');
+grid on;
+
+subplot(3,1,2);
+plot(out.u_alpha_cmd.Time, out.u_alpha_cmd.Data, ...
+    'LineWidth', 1.5);
+hold on;
+xline(30, ':', 'Load ON');
+ylabel('Throttle [%]');
+grid on;
+
+subplot(3,1,3);
+plot(out.du_ign_cmd.Time, out.du_ign_cmd.Data, ...
+    'LineWidth', 1.5);
+hold on;
+xline(30, ':', 'Load ON');
+ylabel('Ignition [deg CA]');
+xlabel('Time [s]');
+grid on;
+
 
