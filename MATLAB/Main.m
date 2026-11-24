@@ -103,7 +103,7 @@ Dd = ctrl.Dd;
 ISCS_Tu = diag([nom.u_alpha, nom.du_ign]);
 ISCS_Ty = nom.omega_e;
 
-%% Test the controller with a trial sim
+% %% Test the controller with a trial sim
 % tEnd = 10; % Simulation duration
 % out = sim('ControllerTestModel', tEnd, options.sim_options);
 % 
