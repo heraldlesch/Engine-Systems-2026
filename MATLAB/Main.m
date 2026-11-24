@@ -223,8 +223,8 @@ D = lin.Ds*De;
 
 %% 2) state feedback gain K is designed
 
-r1 = 6;  % penalization of u_alpha
-r2 = 10; % penalization of delta_u_zeta
+r1 = 10;  % penalization of u_alpha
+r2 = 2; % penalization of delta_u_zeta
 R = diag([r1 r2]);
 
 Q = C' * C;
@@ -236,7 +236,7 @@ K = lqr(A,B,Q,R);
 % Observer tuning parameter q:
 % q -> 0:   fast observer, trust measurement
 % q -> inf: slow observer, trust model
-q = 0.1;
+q = 1;
 
 % get observer gain
 L = lqr(A', C', B*B', q)';
@@ -324,7 +324,7 @@ Controller_d = c2d(Controller_c, Ts, 'tustin');
 [Ad, Bd, Cd, Dd] = ssdata(Controller_d);
 
 %% Test the controller with a trial sim
-tEnd = 30; % Simulation duration
+tEnd = 10; % Simulation duration
 out = sim('ControllerTestModel', tEnd, options.sim_options);
 
 % Extract simulation results
