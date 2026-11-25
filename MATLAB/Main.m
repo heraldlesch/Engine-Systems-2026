@@ -170,3 +170,34 @@ xlabel('Time [s]');
 grid on;
 
 
+%% Calculate Competition Cost
+% Inputs (column or row vectors of equal length N):
+%   t            : time vector [s]
+%   omega        : actual engine speed [rad/s]
+%   omega_ref    : reference engine speed [rad/s]
+%   u_alpha      : throttle position command [%]
+%   Delta_u_zeta_nom : nominal ignition retardation [deg CA]
+
+u_alpha = out.u_alpha_cmd.Data;
+
+Delta_u_zeta_nom = out.du_ign_cmd.Data(end);
+
+
+k_zeta = 2.3345e-4; % [(deg CA)^-2]
+
+% 1. Ignition-retardation efficiency factor k_max
+k_max = 1 / (1 - k_zeta * (Delta_u_zeta_nom^2));
+
+% 2. Speed tracking error term
+speed_err_term = 0.2 * (k_max^2.5) * abs(omega - omega_ref);
+
+% 3. Throttle rate-of-change term |du_alpha / dt|
+% Use gradient so the derivative vector matches the length of t and u_alpha
+du_alpha_dt = gradient(u_alpha, t);
+throttle_rate_term = abs(du_alpha_dt);
+
+% 4. Integrand and trapezoidal integration over time
+integrand = speed_err_term + throttle_rate_term;
+J = trapz(t, integrand);
+
+fprintf('Competition cost J = %.6f\n', J);
