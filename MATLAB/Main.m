@@ -94,14 +94,20 @@ tuning.Ts = 0.001; % sampling rate - must be 0.001
 ctrl = ControllerSynthesis(lin, tuning);
 
 % Extract controller matrices for Simulink
-Ad = ctrl.Ad;
-Bd = ctrl.Bd;
-Cd = ctrl.Cd;
-Dd = ctrl.Dd;
+ISCS_Ad = ctrl.Ad;
+ISCS_Bd = ctrl.Bd;
+ISCS_Cd = ctrl.Cd;
+ISCS_Dd = ctrl.Dd;
 
 % Normalization matrices
 ISCS_Tu = diag([nom.u_alpha, nom.du_ign]);
 ISCS_Ty = nom.omega_e;
+
+%% Save matrices for Simulink
+% Change the name of the file (first argument), otherwise it overwrites the
+% old file with the same name
+
+save('controller1.mat', 'ISCS_Ty', 'ISCS_Tu', 'ISCS_Ad', 'ISCS_Bd', 'ISCS_Cd', 'ISCS_Dd');
 
 
 %% Test controller on nonlinear engine (move this to the plots folder later)
