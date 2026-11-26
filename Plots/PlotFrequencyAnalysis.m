@@ -27,6 +27,10 @@ theta = linspace(0, 2*pi, 400);
 plot(cos(theta), sin(theta), '--k', 'LineWidth', 1.0, 'DisplayName', 'Unit Circle');
 plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 1.8, 'DisplayName', '(-1, 0j)');
 
+% Zoom in on the region of interest around (-1, 0j) and the unit circle
+xlim([-2.5, 2.5]);
+ylim([-2.5, 2.5]);
+
 legend('Location', 'best');
 grid on;
 title('Open-Loop Nyquist Plot');
