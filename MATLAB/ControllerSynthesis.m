@@ -195,5 +195,7 @@ ctrl.Controller_c = Controller_c;
 ctrl.Controller_d = Controller_d;
 ctrl.Plant = Plant;
 
+ctrl.mu = mu;
+ctrl.Lopen_c = Lopen_c;
 
 end
